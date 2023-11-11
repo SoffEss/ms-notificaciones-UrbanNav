@@ -2,6 +2,9 @@ using Microsoft.AspNetCore.Mvc;
 using SendGrid;
 using SendGrid.Helpers.Mail;
 using ms_notificaciones.Models;
+using Amazon;
+using Amazon.SimpleNotificationService;
+using Amazon.SimpleNotificationService.Model;
 
 namespace ms_notificaciones.Controllers;
 
@@ -37,7 +40,7 @@ public class NotificacionesController : ControllerBase
         }
     }
 
-      [Route("correo-recuperacion-clave")]
+    [Route("correo-recuperacion-clave")]
     [HttpPost]
     public async Task<ActionResult> EnviarCorreoRecuperacionClave(ModeloCorreo datos)
     {
@@ -88,6 +91,40 @@ public class NotificacionesController : ControllerBase
         }
     }
 
+        // Envío de SMS
+
+    [Route("enviar-sms")]
+    [HttpPost]
+    public async Task<ActionResult> EnviarSMSNuevaClave(ModeloSms datos)
+    {
+        var accessKey = Environment.GetEnvironmentVariable("ACCESS_KEY_AWS");
+        var secretKey = Environment.GetEnvironmentVariable("SECRET_KEY_AWS");
+        var client = new AmazonSimpleNotificationServiceClient(accessKey, secretKey, RegionEndpoint.USEast2);
+        var messageAttributes = new Dictionary<string, MessageAttributeValue>();
+        var smsType = new MessageAttributeValue
+        {
+            DataType = "String",
+            StringValue = "Transactional"
+        };
+
+        messageAttributes.Add("AWS.SNS.SMS.SMSType", smsType);
+
+        PublishRequest request = new PublishRequest
+        {
+            Message = datos.contenidoMensaje,
+            PhoneNumber = datos.numeroDestino,
+            MessageAttributes = messageAttributes
+        };
+        try
+        {
+            await client.PublishAsync(request);
+            return Ok("Mensaje enviado");
+        }
+        catch
+        {
+            return BadRequest("Error enviando el sms");
+        }
+    }
 
     private SendGridMessage CrearMensajeBase(ModeloCorreo datos)
     {
