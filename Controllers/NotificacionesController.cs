@@ -91,6 +91,32 @@ public class NotificacionesController : ControllerBase
         }
     }
 
+    [Route("Enviar-correo-cambio-clave")]
+    [HttpPost]
+    public async Task<ActionResult> EnviarCorreoCambioClave(ModeloCorreo datos)
+    {
+        var apiKey = Environment.GetEnvironmentVariable("SENDGRID_API_KEY");
+        var client = new SendGridClient(apiKey);
+
+        SendGridMessage msg = this.CrearMensajeBase(datos);
+        msg.SetTemplateId(Environment.GetEnvironmentVariable("TwoFA_SENDGRID_TEMPLATE_ID"));
+        msg.SetTemplateData(new
+        {
+            nombre = datos.nombreDestino,
+            mensaje = datos.contenidoCorreo,
+            asunto = datos.asuntoCorreo
+        });
+        var response = await client.SendEmailAsync(msg);
+        if (response.StatusCode == System.Net.HttpStatusCode.Accepted)
+        {
+            return Ok("Correo enviado a la dirección " + datos.correoDestino);
+        }
+        else
+        {
+            return BadRequest("Error enviando el mensaje a la dirección: " + datos.correoDestino);
+        }
+    }
+
         // Envío de SMS
 
     [Route("enviar-sms")]
