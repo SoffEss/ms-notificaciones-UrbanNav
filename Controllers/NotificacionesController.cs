@@ -124,7 +124,11 @@ public class NotificacionesController : ControllerBase
     public async Task<ActionResult> EnviarSMSNuevaClave(ModeloSms datos)
     {
         var accessKey = Environment.GetEnvironmentVariable("ACCESS_KEY_AWS");
+        //mostrar en consola la acceskey
+        Console.WriteLine(accessKey);
         var secretKey = Environment.GetEnvironmentVariable("SECRET_KEY_AWS");
+    //mostrar en consola la secretkey
+        Console.WriteLine(secretKey);
         var client = new AmazonSimpleNotificationServiceClient(accessKey, secretKey, RegionEndpoint.USEast2);
         var messageAttributes = new Dictionary<string, MessageAttributeValue>();
         var smsType = new MessageAttributeValue
@@ -138,9 +142,13 @@ public class NotificacionesController : ControllerBase
         PublishRequest request = new PublishRequest
         {
             Message = datos.contenidoMensaje,
+            //mostrar en consola el mensaje que sera enviado
+            
             PhoneNumber = datos.numeroDestino,
             MessageAttributes = messageAttributes
         };
+        Console.WriteLine(datos.contenidoMensaje);
+        Console.WriteLine(datos.numeroDestino);
         try
         {
             await client.PublishAsync(request);
